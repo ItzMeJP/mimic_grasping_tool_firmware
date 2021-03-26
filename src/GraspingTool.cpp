@@ -5,7 +5,6 @@ namespace grasping_firmware_tool
 {
 
     Scheduler runner_; // task scheduler cant work inside my class. Thus, everything related is place outside the class but inside the scope
-                       //runner_fsm;
 
     Task task_blink_red_,
         task_blink_blue_,
@@ -16,14 +15,16 @@ namespace grasping_firmware_tool
         task_blink_magenta_;
 
     static int current_msg_,
-        relay_type_;
+               relay_type_;
 
     static bool save_cmd_,
-        relay_cmd_,
+        
         delete_cmd_,
         error_cmd_,
         success_cmd_,
         reset_cmd_;
+
+        bool relay_cmd_;
 
     bool active_state = LOW,
          desactive_state = HIGH;
@@ -206,13 +207,14 @@ namespace grasping_firmware_tool
 
         Serial.begin(BAUD_RATE);
 
-        // SerialCommand only support functions without parameters (TODO: improve this lib)
+        // SerialCommand only support static functions without parameters (TODO: improve this lib to fit Oriented Programming Requisites)
         sCmd.addCommand("99", setMsg99);
         sCmd.addCommand("100", setMsg100);
         sCmd.addCommand("101", setMsg101);
         sCmd.addCommand("102", setMsg102);
         sCmd.addCommand("103", setMsg103);
 
+        // OneButton only support static functions without parameters (TODO: improve this lib to fit Oriented Programming Requisites)
         button_ctrl.attachClick(callBackGripper);
         button_record.attachClick(callBackSave);
         button_record.attachLongPressStop(callbackDelete);
