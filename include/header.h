@@ -100,6 +100,7 @@ void successState();
 void cancelState();
 
 void setRelays(bool _state);
+void turnOffRelays();
 
 int current_msg_,
     relay_type_;

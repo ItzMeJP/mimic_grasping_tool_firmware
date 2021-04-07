@@ -375,7 +375,7 @@ void setLED(int _led_color)
 void setRelays(bool _state)
 {
 
-  if (relay_type_ == GRIPPER_TYPE::PARALLEL_PNEUMATIC_TWO_FINGER)
+  if (relay_type_ == GRIPPER_TYPE::SINGLE_SUCTION_CUP)
   {
 
     digitalWrite(RELAY_1, _state);
@@ -383,9 +383,19 @@ void setRelays(bool _state)
   else if (relay_type_ == GRIPPER_TYPE::PARALLEL_PNEUMATIC_TWO_FINGER)
   {
 
-    digitalWrite(RELAY_1, _state);
-    digitalWrite(RELAY_2, !_state);
+    digitalWrite(RELAY_1, !_state);
+    digitalWrite(RELAY_2, _state);
   }
+}
+
+/// <summary>
+/// Set all relays to inactive. 
+/// </summary>
+void turnOffRelays()
+{
+    digitalWrite(RELAY_1, 0);
+    digitalWrite(RELAY_2, 0);
+
 }
 
 /// <summary>
@@ -428,6 +438,7 @@ void waitForServerConnection()
   long int init_time;
 
   blinkLED(LED_COLOR::YELLOW);
+  turnOffRelays();
 
   while (current_msg_ != MSG_TYPE::CONNECTION_STABILISHED_ONE_RELAY && current_msg_ != MSG_TYPE::CONNECTION_STABILISHED_TWO_ALTERNATE_RELAYS)
   {
