@@ -2,150 +2,13 @@
 /**\file main.cpp
  * \brief Grasping Mimic Firmware Implementation.
  *
- * @version 1.0.27032021
+ * @version 1.0.12042021
  * @author João Pedro Carvalho de Souza
  */
 
 #include<header.h>
 
-/// <summary>
-/// Update state LED based on global variables
-/// </summary>
-/// <param name="outcome"> message.</param>
-void updateLEDsState()
-{
-  digitalWrite(LED_RED, state_red);
-  digitalWrite(LED_GREEN, state_green);
-  digitalWrite(LED_BLUE, state_blue);
-}
-
-/// <summary>
-/// Red Led Blink Callback
-/// </summary>
-void callbackRedBlink()
-{
-  state_red = !state_red;
-  state_green = desactive_state;
-  state_blue = desactive_state;
-  updateLEDsState();
-}
-
-/// <summary>
-/// Green Led Blink Callback
-/// </summary>
-void callbackGreenBlink()
-{
-  state_red = desactive_state;
-  state_green = !state_green;
-  state_blue = desactive_state;
-  updateLEDsState();
-}
-
-/// <summary>
-/// Blue Led Blink Callback
-/// </summary>
-void callbackBlueBlink()
-{
-  state_red = desactive_state;
-  state_green = desactive_state;
-  state_blue = !state_blue;
-  updateLEDsState();
-}
-
-/// <summary>
-/// White Led Blink Callback
-/// </summary>
-void callbackWhiteBlink()
-{
-  state_red = !state_green;
-  state_green = !state_green;
-  state_blue = !state_blue;
-  updateLEDsState();
-}
-
-/// <summary>
-/// Cyan Led Blink Callback
-/// </summary>
-void callbackCyanBlink()
-{
-  state_red = desactive_state;
-  state_green = !state_green;
-  state_blue = !state_blue;
-  updateLEDsState();
-}
-
-/// <summary>
-/// Yellow Led Blink Callback
-/// </summary>
-void callbackYellowBlink()
-{
-  state_red = !state_red;
-  state_green = !state_green;
-  state_blue = desactive_state;
-  updateLEDsState();
-}
-
-/// <summary>
-/// Magenta Led Blink Callback
-/// </summary>
-void callbackMagentaBlink()
-{
-  state_red = !state_red;
-  state_green = desactive_state;
-  state_blue = !state_blue;
-  updateLEDsState();
-}
-
-/// <summary>
-/// Define the blinker scheduler. Each task is associated with a color blink callback. Since the taskscheduler library does not accept parameters, global variables were used. 
-/// Task scheduler library is trick when performing Oriented Object Programming (or multifile association), thus no OP was not used in ths firmware.
-/// TODO: improve this library. By not keep it simple =)
-/// </summary>
-void defineBlinkScheduler()
-{
-
-  task_blink_red_.setInterval(250);
-  task_blink_red_.setIterations(TASK_FOREVER);
-  task_blink_red_.setCallback(&callbackRedBlink);
-
-  task_blink_green_.setInterval(250);
-  task_blink_green_.setIterations(TASK_FOREVER);
-  task_blink_green_.setCallback(&callbackGreenBlink);
-
-  task_blink_blue_.setInterval(250);
-  task_blink_blue_.setIterations(TASK_FOREVER);
-  task_blink_blue_.setCallback(&callbackBlueBlink);
-
-  task_blink_white_.setInterval(250);
-  task_blink_white_.setIterations(TASK_FOREVER);
-  task_blink_white_.setCallback(&callbackWhiteBlink);
-
-  task_blink_yellow_.setInterval(250);
-  task_blink_yellow_.setIterations(TASK_FOREVER);
-  task_blink_yellow_.setCallback(&callbackYellowBlink);
-
-  task_blink_cyan_.setInterval(250);
-  task_blink_cyan_.setIterations(TASK_FOREVER);
-  task_blink_cyan_.setCallback(&callbackCyanBlink);
-
-  task_blink_magenta_.setInterval(250);
-  task_blink_magenta_.setIterations(TASK_FOREVER);
-  task_blink_magenta_.setCallback(&callbackMagentaBlink);
-
-  runner_.init();
-
-  runner_.addTask(task_blink_red_);
-  runner_.addTask(task_blink_green_);
-  runner_.addTask(task_blink_blue_);
-  runner_.addTask(task_blink_white_);
-  runner_.addTask(task_blink_yellow_);
-  runner_.addTask(task_blink_cyan_);
-  runner_.addTask(task_blink_magenta_);
-
-  updateLEDsState();
-
-  runner_.disableAll();
-}
+LEDFramework::CompositeLED output_led(LED_RED, LED_GREEN, LED_BLUE,LEDFramework::CompositeLED::RGB, LEDFramework::LED::ACTIVE_LOW);
 
 /// <summary>
 /// Set current message (provide by SerialCommand library) with code 99 (see enum MSG_TYPE)
@@ -219,154 +82,6 @@ void callbackDelete()
   delete_cmd_ = true;
 }
 
-/// <summary>
-/// Request a led color to blink.
-/// </summary>
-/// <param name="_led_color"> Define which color will blink. Check enum LED_COLOR </param>
-void blinkLED(int _led_color)
-{
-
-  setLED(LED_COLOR::BLANK);
-
-  switch (_led_color)
-  {
-  case LED_COLOR::RED:
-    task_blink_red_.enableIfNot();
-    task_blink_green_.disable();
-    task_blink_blue_.disable();
-    task_blink_cyan_.disable();
-    task_blink_magenta_.disable();
-    task_blink_yellow_.disable();
-    task_blink_white_.disable();
-    break;
-  case LED_COLOR::GREEN:
-    task_blink_red_.disable();
-    task_blink_green_.enableIfNot();
-    task_blink_blue_.disable();
-    task_blink_cyan_.disable();
-    task_blink_magenta_.disable();
-    task_blink_yellow_.disable();
-    task_blink_white_.disable();
-    break;
-  case LED_COLOR::BLUE:
-    task_blink_red_.disable();
-    task_blink_green_.disable();
-    task_blink_blue_.enableIfNot();
-    task_blink_cyan_.disable();
-    task_blink_magenta_.disable();
-    task_blink_yellow_.disable();
-    task_blink_white_.disable();
-    break;
-  case LED_COLOR::YELLOW:
-    task_blink_red_.disable();
-    task_blink_green_.disable();
-    task_blink_blue_.disable();
-    task_blink_cyan_.disable();
-    task_blink_magenta_.disable();
-    task_blink_yellow_.enableIfNot();
-    task_blink_white_.disable();
-
-    break;
-  case LED_COLOR::CYAN:
-    task_blink_red_.disable();
-    task_blink_green_.disable();
-    task_blink_blue_.disable();
-    task_blink_cyan_.enableIfNot();
-    task_blink_magenta_.disable();
-    task_blink_yellow_.disable();
-    task_blink_white_.disable();
-
-    break;
-  case LED_COLOR::MAGENTA:
-    task_blink_red_.disable();
-    task_blink_green_.disable();
-    task_blink_blue_.disable();
-    task_blink_cyan_.disable();
-    task_blink_magenta_.enableIfNot();
-    task_blink_yellow_.disable();
-    task_blink_white_.disable();
-    ;
-
-    break;
-  case LED_COLOR::WHITE:
-    task_blink_red_.disable();
-    task_blink_green_.disable();
-    task_blink_blue_.disable();
-    task_blink_cyan_.disable();
-    task_blink_magenta_.disable();
-    task_blink_yellow_.disable();
-    task_blink_white_.enableIfNot();
-
-    break;
-
-  default:
-    break;
-  }
-}
-
-/// <summary>
-/// Request a led color to turn ON.
-/// </summary>
-/// <param name="_led_color"> Define which color will be activated. Check enum LED_COLOR. Set color BLANK to turn it off </param>
-void setLED(int _led_color)
-{
-  runner_.disableAll();
-
-  switch (_led_color)
-  {
-  case LED_COLOR::RED:
-    state_red = active_state;
-    state_green = desactive_state;
-    state_blue = desactive_state;
-    updateLEDsState();
-    break;
-  case LED_COLOR::GREEN:
-    state_red = desactive_state;
-    state_green = active_state;
-    state_blue = desactive_state;
-    updateLEDsState();
-    break;
-  case LED_COLOR::BLUE:
-    state_red = desactive_state;
-    state_green = desactive_state;
-    state_blue = active_state;
-    updateLEDsState();
-    break;
-  case LED_COLOR::WHITE:
-    state_red = active_state;
-    state_green = active_state;
-    state_blue = active_state;
-    updateLEDsState();
-    break;
-  case LED_COLOR::CYAN:
-    state_red = desactive_state;
-    state_green = active_state;
-    state_blue = active_state;
-    updateLEDsState();
-    break;
-  case LED_COLOR::MAGENTA:
-    state_red = active_state;
-    state_green = desactive_state;
-    state_blue = active_state;
-    updateLEDsState();
-    break;
-  case LED_COLOR::YELLOW:
-    state_red = active_state;
-    state_green = active_state;
-    state_blue = desactive_state;
-    updateLEDsState();
-    break;
-  case LED_COLOR::BLANK:
-    state_red = desactive_state;
-    state_green = desactive_state;
-    state_blue = desactive_state;
-    updateLEDsState();
-    break;
-
-  default:
-    break;
-  }
-}
 
 /// <summary>
 /// Set relays states. It will run according to the global variable state_type_ .Relays are related to pneumatic grippers. Check enum GRIPPER_TYPE.
@@ -437,22 +152,24 @@ void waitForServerConnection()
 {
   long int init_time;
 
-  blinkLED(LED_COLOR::YELLOW);
+  output_led.setBlink(LEDFramework::CompositeLED::YELLOW,500);
+  //blinkLED(LED_COLOR::YELLOW);
   turnOffRelays();
 
   while (current_msg_ != MSG_TYPE::CONNECTION_STABILISHED_ONE_RELAY && current_msg_ != MSG_TYPE::CONNECTION_STABILISHED_TWO_ALTERNATE_RELAYS)
   {
-    runner_.execute();
+    output_led.tick();
     sCmd.readSerial();
     sendMSG("Waiting for server connection.", 1000);
   }
 
   init_time = millis();
-  blinkLED(LED_COLOR::GREEN);
+  //blinkLED(LED_COLOR::GREEN);
+  output_led.setBlink(LEDFramework::CompositeLED::GREEN,250);
 
   while (millis() - init_time < 2000)
   {
-    runner_.execute();
+    output_led.tick();
     sCmd.readSerial();
   }
 
@@ -477,12 +194,13 @@ void initState()
   delete_cmd_ = false;
   error_cmd_ = false;
   success_cmd_ = false;
-  setLED(LED_COLOR::WHITE);
+  output_led.setColor(LEDFramework::CompositeLED::WHITE);
+  //setLED(LED_COLOR::WHITE);
   //End: State's 0utput
 
   while (true)
   {
-    runner_.execute();
+    output_led.tick();
     sCmd.readSerial();
     button_ctrl.tick();
     button_record.tick();
@@ -515,12 +233,15 @@ void relayOnState()
   delete_cmd_ = false;
   error_cmd_ = false;
   success_cmd_ = false;
-  setLED(LED_COLOR::CYAN);
+  
+  output_led.setColor(LEDFramework::CompositeLED::CYAN);
+
+  //setLED(LED_COLOR::CYAN);
   //End: State's 0utput
 
   while (true)
   {
-    runner_.execute();
+    output_led.tick();
     sCmd.readSerial();
     button_ctrl.tick();
     button_record.tick();
@@ -556,12 +277,15 @@ void saveState()
   delete_cmd_ = false;
   error_cmd_ = false;
   success_cmd_ = false;
-  blinkLED(LED_COLOR::BLUE);
+  
+  //blinkLED(LED_COLOR::BLUE);
+  output_led.setBlink(LEDFramework::CompositeLED::BLUE,500);
+
   //End: State's 0utput
 
   while (true)
   {
-    runner_.execute();
+    output_led.tick();
     sCmd.readSerial();
     button_ctrl.tick();
     button_record.tick();
@@ -601,12 +325,14 @@ void errorState()
   delete_cmd_ = false;
   error_cmd_ = false;
   success_cmd_ = false;
-  blinkLED(LED_COLOR::RED);
+  //blinkLED(LED_COLOR::RED);
+  output_led.setBlink(LEDFramework::CompositeLED::RED,500);
+
   //End: State's 0utput
 
   while (true)
   {
-    runner_.execute();
+    output_led.tick();
     sCmd.readSerial();
     button_ctrl.tick();
     button_record.tick();
@@ -637,12 +363,14 @@ void successState()
   delete_cmd_ = false;
   error_cmd_ = false;
   success_cmd_ = false;
-  setLED(LED_COLOR::GREEN);
+  output_led.setColor(LEDFramework::CompositeLED::GREEN);
+
+  //setLED(LED_COLOR::GREEN);
   //End: State's 0utput
 
   while (true)
   {
-    runner_.execute();
+    output_led.tick();
     sCmd.readSerial();
     button_ctrl.tick();
     button_record.tick();
@@ -679,12 +407,13 @@ void cancelState()
   delete_cmd_ = false;
   error_cmd_ = false;
   success_cmd_ = false;
-  blinkLED(LED_COLOR::MAGENTA);
+  //blinkLED(LED_COLOR::MAGENTA);
+  output_led.setBlink(LEDFramework::CompositeLED::MAGENTA,250);
   //End: State's 0utput
 
   while (true)
   {
-    runner_.execute();
+    output_led.tick();
     sCmd.readSerial();
     button_ctrl.tick();
     button_record.tick();
@@ -700,11 +429,12 @@ void cancelState()
     else if (success_cmd_)
     {
       Serial.println("Last save canceled.");
-      blinkLED(LED_COLOR::GREEN);
+      //blinkLED(LED_COLOR::GREEN);
+      output_led.setBlink(LEDFramework::CompositeLED::GREEN,250);
       init_time = millis();
       while (millis() - init_time < 2000)
       {
-        runner_.execute();
+        output_led.tick();
       }
       relayOnState();
     }
@@ -720,9 +450,7 @@ void setup()
   pinMode(RELAY_2, OUTPUT);
   pinMode(BUTTON_CTRL, INPUT);
   pinMode(BUTTON_RECORD, INPUT);
-  pinMode(LED_RED, OUTPUT);
-  pinMode(LED_BLUE, OUTPUT);
-  pinMode(LED_GREEN, OUTPUT);
+
 
   Serial.begin(BAUD_RATE);
 
@@ -738,7 +466,6 @@ void setup()
   button_record.attachClick(callBackSave);
   button_record.attachLongPressStop(callbackDelete);
 
-  defineBlinkScheduler();
 }
 
 /// <summary>

@@ -8,7 +8,7 @@
 #include <Arduino.h>
 #include <OneButton.h>
 #include <SerialCommand.h>
-#include <TaskScheduler.h>
+#include <CompositeLED.h>
 
 #define LED_RED 2
 #define LED_GREEN 3
@@ -19,8 +19,8 @@
 #define RELAY_2 9
 #define BAUD_RATE 115200
 
-bool active_state = LOW,
-     desactive_state = HIGH;
+bool active_state = HIGH,
+     desactive_state = LOW;
 
 enum MSG_TYPE
 {
@@ -67,29 +67,9 @@ void callBackGripper();
 void callBackSave();
 void callbackDelete();
 
-Scheduler runner_;
-Task task_blink_red_,
-    task_blink_blue_,
-    task_blink_green_,
-    task_blink_white_,
-    task_blink_yellow_,
-    task_blink_cyan_,
-    task_blink_magenta_;
-
 bool state_red = desactive_state,
      state_green = desactive_state,
      state_blue = desactive_state;
-
-void updateLEDsState();
-void callbackRedBlink();
-void callbackGreenBlink();
-void callbackBlueBlink();
-void callbackWhiteBlink();
-void callbackCyanBlink();
-void callbackYellowBlink();
-void callbackMagentaBlink();
-void blinkLED(int _led_color);
-void setLED(int _led_color);
 
 void waitForServerConnection();
 void initState();
