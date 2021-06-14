@@ -1,7 +1,7 @@
 /**\file main.cpp
  * \brief Grasping Mimic Firmware Declaration.
  *
- * @version 1.0.27032021
+ * @version 1.0.14062021
  * @author João Pedro Carvalho de Souza
  */
 
@@ -24,13 +24,19 @@ bool active_state = HIGH,
 
 enum MSG_TYPE
 {
-  CONNECTION_STABILISHED_TWO_ALTERNATE_RELAYS = 99,
-  CONNECTION_STABILISHED_ONE_RELAY = 100,
-  ERROR = 101,
-  SUCCESS = 102,
-  RESET = 103,
-  SAVE = 104,
-  REMOVE_LAST_SAVE = 105
+  CONNECTION_STABILISHED_TWO_ALTERNATE_RELAYS = 100,
+  CONNECTION_STABILISHED_ONE_RELAY,
+  ACK,
+  ERROR,
+  SUCCESS,
+  RESET,
+  STATE_INIT = 500,
+  STATE_RUNNING = 501,
+  STATE_ACTIVE_GRIPPER = 502,
+  STATE_SAVING = 503,
+  STATE_ERROR = 504,
+  STATE_CANCELLING = 505,
+  STATE_SUCCESS = 506
 };
 
 enum LED_COLOR
@@ -46,16 +52,24 @@ enum LED_COLOR
 };
 
 enum GRIPPER_TYPE{
-  PARALLEL_PNEUMATIC_TWO_FINGER = 99,
-  SINGLE_SUCTION_CUP = 100
+  PARALLEL_PNEUMATIC_TWO_FINGER = 100,
+  SINGLE_SUCTION_CUP = 101
 };
 
 SerialCommand sCmd;
-void setMsg99(),
-     setMsg100(),
-     setMsg101(),
-     setMsg102(),
-     setMsg103();
+void setMsgConnectionStabTwoAlternateRelays(),
+     setMsgConnectionStabOneRelays(),
+     setMsgACK(),
+     setMsgERROR(),
+     setMsgSUCCESS(),
+     setMsgRESET(),
+     setMsgStInit(),
+     setMsgStRunning(),
+     setMsgStActiveGripper(),
+     setMsgStSaving(),
+     setMsgStError(),
+     setMsgStCancelling(),
+     setMsgStSuccess();
 
 void sendMSG(const char _msg[], uint32_t _delay);
 void sendMSG(MSG_TYPE _msg, uint32_t _delay);

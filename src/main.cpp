@@ -2,52 +2,62 @@
 /**\file main.cpp
  * \brief Grasping Mimic Firmware Implementation.
  *
- * @version 1.0.12042021
+ * @version 1.0.14062021
  * @author João Pedro Carvalho de Souza
  */
 
-#include<header.h>
+#include <header.h>
 
-LEDFramework::CompositeLED output_led(LED_RED, LED_GREEN, LED_BLUE,LEDFramework::CompositeLED::RGB, LEDFramework::LED::ACTIVE_LOW);
+LEDFramework::CompositeLED output_led(LED_RED, LED_GREEN, LED_BLUE, LEDFramework::CompositeLED::RGB, LEDFramework::LED::ACTIVE_LOW);
+
+// TODO: SerialCommand only support functions without parameters (TODO: improve this lib to fit Oriented Programming Requisites)
 
 /// <summary>
-/// Set current message (provide by SerialCommand library) with code 99 (see enum MSG_TYPE)
+/// Set current message (provide by SerialCommand library) with code (see enum MSG_TYPE)
 /// </summary>
-void setMsg99()
+void setMsgConnectionStabTwoAlternateRelays()
 {
   current_msg_ = MSG_TYPE::CONNECTION_STABILISHED_TWO_ALTERNATE_RELAYS;
 }
 
 /// <summary>
-/// Set current message (provide by SerialCommand library) with code 100 (see enum MSG_TYPE)
+/// Set current message (provide by SerialCommand library) with code (see enum MSG_TYPE)
 /// </summary>
-void setMsg100()
+void setMsgConnectionStabOneRelays()
 {
   current_msg_ = MSG_TYPE::CONNECTION_STABILISHED_ONE_RELAY;
 }
 
 /// <summary>
-/// Set current message (provide by SerialCommand library) with code 101 (see enum MSG_TYPE)
+/// Set current message (provide by SerialCommand library) with code (see enum MSG_TYPE)
 /// </summary>
-void setMsg101()
+void setMsgACK()
+{
+  current_msg_ = MSG_TYPE::ACK;
+}
+
+/// <summary>
+/// Set current message (provide by SerialCommand library) with code (see enum MSG_TYPE)
+/// </summary>
+void setMsgERROR()
 {
   current_msg_ = MSG_TYPE::ERROR;
   error_cmd_ = true;
 }
 
 /// <summary>
-/// Set current message (provide by SerialCommand library) with code 102 (see enum MSG_TYPE)
+/// Set current message (provide by SerialCommand library) with code (see enum MSG_TYPE)
 /// </summary>
-void setMsg102()
+void setMsgSUCCESS()
 {
   current_msg_ = MSG_TYPE::SUCCESS;
   success_cmd_ = true;
 }
 
 /// <summary>
-/// Set current message (provide by SerialCommand library) with code 103 (see enum MSG_TYPE)
+/// Set current message (provide by SerialCommand library) with code (see enum MSG_TYPE)
 /// </summary>
-void setMsg103()
+void setMsgRESET()
 {
   current_msg_ = MSG_TYPE::RESET;
   save_cmd_ = false,
@@ -82,7 +92,6 @@ void callbackDelete()
   delete_cmd_ = true;
 }
 
-
 /// <summary>
 /// Set relays states. It will run according to the global variable state_type_ .Relays are related to pneumatic grippers. Check enum GRIPPER_TYPE.
 /// </summary>
@@ -104,13 +113,34 @@ void setRelays(bool _state)
 }
 
 /// <summary>
-/// Set all relays to inactive. 
+/// Set all relays to inactive.
 /// </summary>
 void turnOffRelays()
 {
-    digitalWrite(RELAY_1, 0);
-    digitalWrite(RELAY_2, 0);
+  digitalWrite(RELAY_1, 0);
+  digitalWrite(RELAY_2, 0);
+}
 
+/// <summary>
+/// Send a single serial message with timestamp header. Usefull to print info messages Terminator is \r
+/// </summary>
+/// <param name="_msg"> message to pub in serial </param>
+void sendMSG(String _msg)
+{
+  Serial.print(millis());
+  Serial.print(": ");
+  Serial.println(_msg);
+}
+
+/// <summary>
+/// Send a single serial message with timestamp header. Usefull to print info messages Terminator is \r
+/// </summary>
+/// <param name="_msg"> message to pub in serial </param>
+void sendMSG(int _msg)
+{
+  Serial.print(millis());
+  Serial.print(": ");
+  Serial.println(_msg);
 }
 
 /// <summary>
@@ -119,6 +149,23 @@ void turnOffRelays()
 /// <param name="_msg"> message to pub in serial </param>
 /// <param name="_delay"> delay time to send the msg in ms </param>
 void sendMSG(const char _msg[], uint32_t _delay)
+{
+  static long int init_time = millis();
+  if (millis() - init_time > _delay)
+  {
+    Serial.print(millis());
+    Serial.print(": ");
+    Serial.println(_msg);
+    init_time = millis();
+  }
+}
+
+/// <summary>
+/// Send a serial message with timestamp header. Usefull to print info messages Terminator is \r
+/// </summary>
+/// <param name="_msg"> message to pub in serial </param>
+/// <param name="_delay"> delay time to send the msg in ms </param>
+void sendMSG(String _msg, uint32_t _delay)
 {
   static long int init_time = millis();
   if (millis() - init_time > _delay)
@@ -146,13 +193,13 @@ void sendMSG(MSG_TYPE _msg, uint32_t _delay)
 }
 
 /// <summary>
-/// Waiting firmware to connect to the server
+/// FSM init state
 /// </summary>
 void waitForServerConnection()
 {
   long int init_time;
 
-  output_led.setBlink(LEDFramework::CompositeLED::YELLOW,500);
+  output_led.setBlink(LEDFramework::CompositeLED::YELLOW, 500);
   //blinkLED(LED_COLOR::YELLOW);
   turnOffRelays();
 
@@ -160,12 +207,13 @@ void waitForServerConnection()
   {
     output_led.tick();
     sCmd.readSerial();
-    sendMSG("Waiting for server connection.", 1000);
+    String s(MSG_TYPE::STATE_INIT);
+    sendMSG("Waiting for server connection #" + s, 1000);
   }
 
   init_time = millis();
   //blinkLED(LED_COLOR::GREEN);
-  output_led.setBlink(LEDFramework::CompositeLED::GREEN,250);
+  output_led.setBlink(LEDFramework::CompositeLED::GREEN, 250);
 
   while (millis() - init_time < 2000)
   {
@@ -174,19 +222,16 @@ void waitForServerConnection()
   }
 
   relay_type_ = current_msg_;
-  Serial.print("Connection Stablished. Relay mode: ");
-  Serial.println(relay_type_);
-
+  String s(relay_type_);
+  sendMSG("Connection Stablished. Relay mode: " + s);
   reset_cmd_ = false;
 }
 
 /// <summary>
-/// FSM init state
+/// FSM running state
 /// </summary>
 void initState()
 {
-  Serial.println("Current State >> Init State.");
-
   //Start: State's 0utput
   setRelays(LOW); // Suction off or 2F opened
   save_cmd_ = false,
@@ -200,6 +245,9 @@ void initState()
 
   while (true)
   {
+    String s(MSG_TYPE::STATE_RUNNING);
+    sendMSG("Running State #" + s, 1000);
+
     output_led.tick();
     sCmd.readSerial();
     button_ctrl.tick();
@@ -208,7 +256,7 @@ void initState()
     //Start: Transitions Verification
     if (reset_cmd_)
     {
-      Serial.println("Reseting request.");
+      sendMSG("Reseting request.");
       loop();
     }
 
@@ -225,15 +273,13 @@ void initState()
 /// </summary>
 void relayOnState()
 {
-  Serial.println("Current State >> Relay ON.");
-
   //Start: State's 0utput
   setRelays(HIGH); // Suction ON or 2F CLOSED
   save_cmd_ = false,
   delete_cmd_ = false;
   error_cmd_ = false;
   success_cmd_ = false;
-  
+
   output_led.setColor(LEDFramework::CompositeLED::CYAN);
 
   //setLED(LED_COLOR::CYAN);
@@ -241,6 +287,9 @@ void relayOnState()
 
   while (true)
   {
+    String s(MSG_TYPE::STATE_ACTIVE_GRIPPER);
+    sendMSG("Gripper Activated #" + s, 1000);
+
     output_led.tick();
     sCmd.readSerial();
     button_ctrl.tick();
@@ -248,7 +297,7 @@ void relayOnState()
 
     if (reset_cmd_)
     {
-      Serial.println("Reseting request.");
+      sendMSG("Reseting request.");
       loop();
     }
 
@@ -258,7 +307,7 @@ void relayOnState()
     }
     else if (save_cmd_)
     {
-      Serial.println("Saving request.");
+      sendMSG("Saving request.");
       saveState();
     }
   }
@@ -269,44 +318,43 @@ void relayOnState()
 /// </summary>
 void saveState()
 {
-  Serial.println("Current State >> Save State.");
-
   //Start: State's 0utput
   setRelays(HIGH); // Suction ON or 2F CLOSED
   save_cmd_ = false,
   delete_cmd_ = false;
   error_cmd_ = false;
   success_cmd_ = false;
-  
+
   //blinkLED(LED_COLOR::BLUE);
-  output_led.setBlink(LEDFramework::CompositeLED::BLUE,500);
+  output_led.setBlink(LEDFramework::CompositeLED::BLUE, 500);
 
   //End: State's 0utput
 
   while (true)
   {
+    String s(MSG_TYPE::STATE_SAVING);
+    sendMSG("Save request state #" + s, 1000);
+
     output_led.tick();
     sCmd.readSerial();
     button_ctrl.tick();
     button_record.tick();
 
-    sendMSG(MSG_TYPE::SAVE,500);
-
     if (reset_cmd_)
     {
-      Serial.println("Reseting request.");
+      sendMSG("Reseting request.");
       loop();
     }
 
     else if (error_cmd_)
     {
-      Serial.println("Unable to record grasping.");
+      sendMSG("Unable to record grasping.");
       errorState();
     }
 
     else if (success_cmd_)
     {
-      Serial.println("Grasping saved with success.");
+      sendMSG("Grasping saved with success.");
       successState();
     }
   }
@@ -317,8 +365,6 @@ void saveState()
 /// </summary>
 void errorState()
 {
-  Serial.println("Current State >> Error State.");
-
   //Start: State's 0utput
   setRelays(HIGH); // Suction ON or 2F CLOSED
   save_cmd_ = false,
@@ -326,12 +372,15 @@ void errorState()
   error_cmd_ = false;
   success_cmd_ = false;
   //blinkLED(LED_COLOR::RED);
-  output_led.setBlink(LEDFramework::CompositeLED::RED,500);
+  output_led.setBlink(LEDFramework::CompositeLED::RED, 500);
 
   //End: State's 0utput
 
   while (true)
   {
+    String s(MSG_TYPE::STATE_ERROR);
+    sendMSG("Error state #" + s, 1000);
+
     output_led.tick();
     sCmd.readSerial();
     button_ctrl.tick();
@@ -339,7 +388,7 @@ void errorState()
 
     if (reset_cmd_)
     {
-      Serial.println("Reseting request.");
+      sendMSG("Reseting request.");
       loop();
     }
 
@@ -355,8 +404,6 @@ void errorState()
 /// </summary>
 void successState()
 {
-  Serial.println("Current State >> Success State.");
-
   //Start: State's 0utput
   setRelays(HIGH); // Suction ON or 2F CLOSED
   save_cmd_ = false,
@@ -370,6 +417,9 @@ void successState()
 
   while (true)
   {
+    String s(MSG_TYPE::STATE_SUCCESS);
+    sendMSG("Succes state #" + s, 1000);
+
     output_led.tick();
     sCmd.readSerial();
     button_ctrl.tick();
@@ -377,7 +427,7 @@ void successState()
 
     if (reset_cmd_)
     {
-      Serial.println("Reseting request.");
+      sendMSG("Reseting request.");
       loop();
     }
 
@@ -397,9 +447,7 @@ void successState()
 /// </summary>
 void cancelState()
 {
-
   long int init_time;
-  Serial.println("Current State >> Cancel State.");
 
   //Start: State's 0utput
   setRelays(HIGH); // Suction ON or 2F CLOSED
@@ -408,21 +456,22 @@ void cancelState()
   error_cmd_ = false;
   success_cmd_ = false;
   //blinkLED(LED_COLOR::MAGENTA);
-  output_led.setBlink(LEDFramework::CompositeLED::MAGENTA,250);
+  output_led.setBlink(LEDFramework::CompositeLED::MAGENTA, 250);
   //End: State's 0utput
 
   while (true)
   {
+    String s(MSG_TYPE::STATE_CANCELLING);
+    sendMSG("Cancelling request state #" + s, 1000);
+
     output_led.tick();
     sCmd.readSerial();
     button_ctrl.tick();
     button_record.tick();
 
-    sendMSG(MSG_TYPE::REMOVE_LAST_SAVE,500);
-
     if (reset_cmd_)
     {
-      Serial.println("Reseting request.");
+      sendMSG("Reseting request.");
       loop();
     }
 
@@ -430,7 +479,7 @@ void cancelState()
     {
       Serial.println("Last save canceled.");
       //blinkLED(LED_COLOR::GREEN);
-      output_led.setBlink(LEDFramework::CompositeLED::GREEN,250);
+      output_led.setBlink(LEDFramework::CompositeLED::GREEN, 250);
       init_time = millis();
       while (millis() - init_time < 2000)
       {
@@ -451,21 +500,27 @@ void setup()
   pinMode(BUTTON_CTRL, INPUT);
   pinMode(BUTTON_RECORD, INPUT);
 
-
   Serial.begin(BAUD_RATE);
 
   // SerialCommand only support functions without parameters (TODO: improve this lib to fit Oriented Programming Requisites)
-  sCmd.addCommand("99", setMsg99);
-  sCmd.addCommand("100", setMsg100);
-  sCmd.addCommand("101", setMsg101);
-  sCmd.addCommand("102", setMsg102);
-  sCmd.addCommand("103", setMsg103);
+  char buffer[5];
+  itoa(MSG_TYPE::CONNECTION_STABILISHED_TWO_ALTERNATE_RELAYS, buffer, 10);
+  sCmd.addCommand(buffer, setMsgConnectionStabTwoAlternateRelays);
+  itoa(MSG_TYPE::CONNECTION_STABILISHED_ONE_RELAY, buffer, 10);
+  sCmd.addCommand(buffer, setMsgConnectionStabOneRelays);
+  itoa(MSG_TYPE::SUCCESS, buffer, 10);
+  sCmd.addCommand(buffer, setMsgSUCCESS);
+  itoa(MSG_TYPE::ACK, buffer, 10);
+  sCmd.addCommand(buffer, setMsgACK);
+  itoa(MSG_TYPE::ERROR, buffer, 10);
+  sCmd.addCommand(buffer, setMsgERROR);
+  itoa(MSG_TYPE::RESET, buffer, 10);
+  sCmd.addCommand(buffer, setMsgRESET);
 
   // OneButton only support functions without parameters (TODO: improve this lib to fit Oriented Programming Requisites)
   button_ctrl.attachClick(callBackGripper);
   button_record.attachClick(callBackSave);
   button_record.attachLongPressStop(callbackDelete);
-
 }
 
 /// <summary>
