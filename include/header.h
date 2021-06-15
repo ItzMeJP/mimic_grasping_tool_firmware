@@ -12,11 +12,11 @@
 
 #define LED_RED 2
 #define LED_GREEN 3
-#define LED_BLUE 5
-#define BUTTON_RECORD 7 //down
-#define BUTTON_CTRL 8   //up
-#define RELAY_1 4
-#define RELAY_2 9
+#define LED_BLUE 4
+#define BUTTON_RECORD 8 //down
+#define BUTTON_CTRL 7   //up
+#define RELAY_1 6
+#define RELAY_2 5
 #define BAUD_RATE 115200
 
 bool active_state = HIGH,
