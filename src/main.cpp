@@ -377,7 +377,7 @@ void saveState()
 
     else if (current_save_state_time - init_save_state_time >= SAVE_STATE_TIMEOUT_MS)
     {
-      sendMSG("Unable to record grasping. Timeout exceeded [ms] " + SAVE_STATE_TIMEOUT_MS);
+      sendMSG("Unable to record grasping. Timeout exceeded 6s.");
       errorState();
     }
 
