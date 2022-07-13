@@ -2,7 +2,7 @@
 /**\file main.cpp
  * \brief Grasping Mimic Firmware Implementation.
  *
- * @version 1.0.14062021
+ * @version 2.0.13072022
  * @author João Pedro Carvalho de Souza
  */
 
@@ -69,6 +69,14 @@ void setMsgRESET()
 }
 
 /// <summary>
+/// Set current message (provide by SerialCommand library) with code (see enum MSG_TYPE)
+/// </summary>
+void setMsgSHUTDOWN()
+{
+  current_msg_ = MSG_TYPE::SHUTDOWN;
+}
+
+/// <summary>
 /// Callback to set the global variable relay_cmd_
 /// </summary>
 void callBackGripper()
@@ -99,12 +107,12 @@ void callbackDelete()
 void setRelays(bool _state)
 {
 
-  if (relay_type_ == GRIPPER_TYPE::SINGLE_SUCTION_CUP)
+  if (relay_type_ == GRIPPER_TYPE::SCHMALZ_FOAM_SUCTION_CUP_FMSW_N10_76x22)
   {
 
     digitalWrite(RELAY_1, _state);
   }
-  else if (relay_type_ == GRIPPER_TYPE::PARALLEL_PNEUMATIC_TWO_FINGER)
+  else if (relay_type_ == GRIPPER_TYPE::FESTO_2F_HGPC_16_A_30)
   {
 
     digitalWrite(RELAY_1, !_state);
@@ -203,13 +211,18 @@ void waitForServerConnection()
   //blinkLED(LED_COLOR::YELLOW);
   turnOffRelays();
 
-  while (current_msg_ != MSG_TYPE::CONNECTION_STABILISHED_ONE_RELAY && current_msg_ != MSG_TYPE::CONNECTION_STABILISHED_TWO_ALTERNATE_RELAYS)
+  while ( current_msg_ != MSG_TYPE::CONNECTION_STABILISHED_ONE_RELAY 
+       && current_msg_ != MSG_TYPE::CONNECTION_STABILISHED_TWO_ALTERNATE_RELAYS
+       && current_msg_ != MSG_TYPE::SHUTDOWN)
   {
     output_led.tick();
     sCmd.readSerial();
     String s(MSG_TYPE::STATE_INIT);
     sendMSG("Waiting for server connection #" + s, 1000);
   }
+
+  if(current_msg_ == MSG_TYPE::SHUTDOWN)
+    return;
 
   init_time = millis();
   //blinkLED(LED_COLOR::GREEN);
@@ -330,6 +343,10 @@ void saveState()
 
   //End: State's 0utput
 
+  long int init_save_state_time, current_save_state_time;
+
+  init_save_state_time = millis();
+
   while (true)
   {
     String s(MSG_TYPE::STATE_SAVING);
@@ -348,7 +365,7 @@ void saveState()
 
     else if (error_cmd_)
     {
-      sendMSG("Unable to record grasping.");
+      sendMSG("Unable to record grasping. Error CMD detected.");
       errorState();
     }
 
@@ -357,6 +374,15 @@ void saveState()
       sendMSG("Grasping saved with success.");
       successState();
     }
+
+    else if (current_save_state_time - init_save_state_time >= SAVE_STATE_TIMEOUT_MS)
+    {
+      sendMSG("Unable to record grasping. Timeout exceeded [ms] " + SAVE_STATE_TIMEOUT_MS);
+      errorState();
+    }
+
+    current_save_state_time = millis();
+
   }
 }
 
@@ -501,7 +527,7 @@ void setup()
   pinMode(BUTTON_RECORD, INPUT);
 
   Serial.begin(BAUD_RATE);
-
+ 
   // SerialCommand only support functions without parameters (TODO: improve this lib to fit Oriented Programming Requisites)
   char buffer[5];
   itoa(MSG_TYPE::CONNECTION_STABILISHED_TWO_ALTERNATE_RELAYS, buffer, 10);
@@ -516,6 +542,8 @@ void setup()
   sCmd.addCommand(buffer, setMsgERROR);
   itoa(MSG_TYPE::RESET, buffer, 10);
   sCmd.addCommand(buffer, setMsgRESET);
+  itoa(MSG_TYPE::SHUTDOWN, buffer, 10);
+  sCmd.addCommand(buffer, setMsgSHUTDOWN);  
 
   // OneButton only support functions without parameters (TODO: improve this lib to fit Oriented Programming Requisites)
   button_ctrl.attachClick(callBackGripper);
@@ -530,5 +558,19 @@ void loop()
 {
   current_msg_ = -1;
   waitForServerConnection();
+
+  /*
+  if(current_msg_ == MSG_TYPE::SHUTDOWN){   
+    button_ctrl.reset();
+    button_record.reset();
+    output_led.setColor(LEDFramework::CompositeLED::BLANK);
+    Serial.end();
+    //wdt_enable(WDTO_2S); 
+    exit(0);
+  }
+  */ // TODO: try to apply the software reset instead of pusshing arduino button to load new firmwares.
+    
   initState();
+
 }
+

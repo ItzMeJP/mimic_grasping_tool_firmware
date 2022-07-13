@@ -11,10 +11,11 @@
 
 Grasping mimic tool firmware implementation in C to Arduino. Tested in Arduino Nano Boards. Support to parallel pneumatic two finger and single suction grippers. 
 
-![alt text](/images/graspingmimictool.jpg)
+![alt text](/images/mimic_tool.png)
 <p align="center">
-A grasping mimic tool
+The Mimic Grasping Handler
 </p>
+
     
 # <a name="prerequisites"></a>2. Prerequisites
 
@@ -25,7 +26,7 @@ A grasping mimic tool
 
 # <a name="installation"></a>3. Installation
 
-Just compile and upload the code to an Arduino board. The code was first implemented with VisualCode + PlatformIO extension.
+Just compile and upload the code to an Arduino board (the hardreset button into the board should be pressed while uploading). The code was first implemented with VisualCode + PlatformIO extension.
 
 1. [VisualCode](https://code.visualstudio.com/)
 2. [PlatformIO](https://platformio.org/install/ide?install=vscode)
@@ -36,7 +37,11 @@ The pinout configuration can be set in "include/header.h" header before compilin
 
 # <a name="usage"></a>3. Usage
 
-The firmware is designed to interact with a external computer with a server working on it. See [link](). The communication is performed by serial data with a default baudrate of 115200. 
+The firmware is designed to interact with a external computer with a server working on it. The communication is performed by serial data with a default baudrate of 115200. 
+
+The supported grippers implemented are:
+*  FESTO_2F_HGPC_16_A_30; (30 is related to 30mm open width finger)
+*  SCHMALZ_FOAM_SUCTION_CUP_FMSW_N10_76x22;
 
 The firmware Finite State Machine (FSM) is presented bellow. 
 

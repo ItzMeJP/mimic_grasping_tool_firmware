@@ -1,7 +1,7 @@
 /**\file main.cpp
  * \brief Grasping Mimic Firmware Declaration.
  *
- * @version 1.0.14062021
+ * @version 2.0.13072022
  * @author João Pedro Carvalho de Souza
  */
 
@@ -9,6 +9,8 @@
 #include <OneButton.h>
 #include <SerialCommand.h>
 #include <CompositeLED.h>
+
+ #include <avr/wdt.h>
 
 #define LED_RED 2
 #define LED_GREEN 3
@@ -18,6 +20,9 @@
 #define RELAY_1 6
 #define RELAY_2 5
 #define BAUD_RATE 115200
+#define SAVE_STATE_TIMEOUT_MS 6000 
+
+
 
 bool active_state = HIGH,
      desactive_state = LOW;
@@ -30,6 +35,7 @@ enum MSG_TYPE
   ERROR,
   SUCCESS,
   RESET,
+  SHUTDOWN,
   STATE_INIT = 500,
   STATE_RUNNING = 501,
   STATE_ACTIVE_GRIPPER = 502,
@@ -52,8 +58,8 @@ enum LED_COLOR
 };
 
 enum GRIPPER_TYPE{
-  PARALLEL_PNEUMATIC_TWO_FINGER = 100,
-  SINGLE_SUCTION_CUP = 101
+  FESTO_2F_HGPC_16_A_30 = 100,
+  SCHMALZ_FOAM_SUCTION_CUP_FMSW_N10_76x22 = 101
 };
 
 SerialCommand sCmd;
