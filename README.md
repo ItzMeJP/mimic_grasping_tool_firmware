@@ -67,5 +67,7 @@ The implemented method is a Moore Machine with its outputs described as:
 State's output
 </p>
 
+**OBS:** The system can be hard reset by holding the Grasp-Releae button. 
+
 
 

@@ -100,6 +100,10 @@ void callbackDelete()
   delete_cmd_ = true;
 }
 
+void callBackShutdown(){
+  wdt_enable(WDTO_1S);
+}
+
 /// <summary>
 /// Set relays states. It will run according to the global variable state_type_ .Relays are related to pneumatic grippers. Check enum GRIPPER_TYPE.
 /// </summary>
@@ -173,14 +177,15 @@ void sendMSG(const char _msg[], uint32_t _delay)
 /// </summary>
 /// <param name="_msg"> message to pub in serial </param>
 /// <param name="_delay"> delay time to send the msg in ms </param>
-void sendMSG(String _msg, uint32_t _delay)
+void sendMSG(const char _msg[], const char _msg_code[], uint32_t _delay)
 {
   static long int init_time = millis();
   if (millis() - init_time > _delay)
   {
     Serial.print(millis());
     Serial.print(": ");
-    Serial.println(_msg);
+    Serial.print(_msg);
+    Serial.println(_msg_code);
     init_time = millis();
   }
 }
@@ -217,8 +222,10 @@ void waitForServerConnection()
   {
     output_led.tick();
     sCmd.readSerial();
-    String s(MSG_TYPE::STATE_INIT);
-    sendMSG("Waiting for server connection #" + s, 1000);
+    //String s(MSG_TYPE::STATE_INIT);
+    char buffer[5];
+    itoa(MSG_TYPE::STATE_INIT, buffer, 10);
+    sendMSG("Waiting for server connection #" , buffer, 1000);
   }
 
   if(current_msg_ == MSG_TYPE::SHUTDOWN)
@@ -258,8 +265,12 @@ void initState()
 
   while (true)
   {
-    String s(MSG_TYPE::STATE_RUNNING);
-    sendMSG("Running State #" + s, 1000);
+    //String s(MSG_TYPE::STATE_RUNNING);
+    //sendMSG("Running State #" + s, 1000);
+
+    char buffer[5];
+    itoa(MSG_TYPE::STATE_RUNNING, buffer, 10);
+    sendMSG("Running State #" , buffer, 1000);
 
     output_led.tick();
     sCmd.readSerial();
@@ -300,8 +311,12 @@ void relayOnState()
 
   while (true)
   {
-    String s(MSG_TYPE::STATE_ACTIVE_GRIPPER);
-    sendMSG("Gripper Activated #" + s, 1000);
+   // String s(MSG_TYPE::STATE_ACTIVE_GRIPPER);
+   // sendMSG("Gripper Activated #" + s, 1000);
+
+    char buffer[5];
+    itoa(MSG_TYPE::STATE_ACTIVE_GRIPPER, buffer, 10);
+    sendMSG("Gripper Activated #" , buffer, 1000);
 
     output_led.tick();
     sCmd.readSerial();
@@ -312,6 +327,7 @@ void relayOnState()
     {
       sendMSG("Reseting request.");
       loop();
+      //wdt_enable(WDTO_30MS); 
     }
 
     else if (!relay_cmd_)
@@ -343,14 +359,20 @@ void saveState()
 
   //End: State's 0utput
 
+/*
   long int init_save_state_time, current_save_state_time;
 
   init_save_state_time = millis();
+*/
 
   while (true)
   {
-    String s(MSG_TYPE::STATE_SAVING);
-    sendMSG("Save request state #" + s, 1000);
+    //String s(MSG_TYPE::STATE_SAVING);
+    //sendMSG("Saving state #" + s, 1000);
+
+    char buffer[5];
+    itoa(MSG_TYPE::STATE_SAVING, buffer, 10);
+    sendMSG("Saving request state #" , buffer, 1000);
 
     output_led.tick();
     sCmd.readSerial();
@@ -365,7 +387,7 @@ void saveState()
 
     else if (error_cmd_)
     {
-      sendMSG("Unable to record grasping. Error CMD detected.");
+      sendMSG("Unable to record grasping.");
       errorState();
     }
 
@@ -375,6 +397,8 @@ void saveState()
       successState();
     }
 
+
+    /*
     else if (current_save_state_time - init_save_state_time >= SAVE_STATE_TIMEOUT_MS)
     {
       sendMSG("Unable to record grasping. Timeout exceeded 6s.");
@@ -382,7 +406,7 @@ void saveState()
     }
 
     current_save_state_time = millis();
-
+    */
   }
 }
 
@@ -404,8 +428,12 @@ void errorState()
 
   while (true)
   {
-    String s(MSG_TYPE::STATE_ERROR);
-    sendMSG("Error state #" + s, 1000);
+    //String s(MSG_TYPE::STATE_ERROR);
+    //sendMSG("Error state #" + s, 1000);
+
+    char buffer[5];
+    itoa(MSG_TYPE::STATE_ERROR, buffer, 10);
+    sendMSG("Error state #" , buffer, 1000);
 
     output_led.tick();
     sCmd.readSerial();
@@ -443,8 +471,12 @@ void successState()
 
   while (true)
   {
-    String s(MSG_TYPE::STATE_SUCCESS);
-    sendMSG("Succes state #" + s, 1000);
+    //String s(MSG_TYPE::STATE_SUCCESS);
+    //sendMSG("Succes state #" + s, 1000);
+
+    char buffer[5];
+    itoa(MSG_TYPE::STATE_SUCCESS, buffer, 10);
+    sendMSG("Succes state #" , buffer, 1000);
 
     output_led.tick();
     sCmd.readSerial();
@@ -487,8 +519,12 @@ void cancelState()
 
   while (true)
   {
-    String s(MSG_TYPE::STATE_CANCELLING);
-    sendMSG("Cancelling request state #" + s, 1000);
+    //String s(MSG_TYPE::STATE_CANCELLING);
+    //sendMSG("Cancelling request state #" + s, 1000);
+
+    char buffer[5];
+    itoa(MSG_TYPE::STATE_CANCELLING, buffer, 10);
+    sendMSG("Cancelling request #" , buffer, 1000);
 
     output_led.tick();
     sCmd.readSerial();
@@ -521,6 +557,8 @@ void cancelState()
 /// </summary>
 void setup()
 {
+
+  wdt_disable();
   pinMode(RELAY_1, OUTPUT);
   pinMode(RELAY_2, OUTPUT);
   pinMode(BUTTON_CTRL, INPUT);
@@ -547,6 +585,7 @@ void setup()
 
   // OneButton only support functions without parameters (TODO: improve this lib to fit Oriented Programming Requisites)
   button_ctrl.attachClick(callBackGripper);
+  button_ctrl.attachLongPressStop(callBackShutdown);
   button_record.attachClick(callBackSave);
   button_record.attachLongPressStop(callbackDelete);
 }

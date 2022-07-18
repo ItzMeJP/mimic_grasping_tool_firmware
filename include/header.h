@@ -10,7 +10,7 @@
 #include <SerialCommand.h>
 #include <CompositeLED.h>
 
- #include <avr/wdt.h>
+#include <avr/wdt.h>
 
 #define LED_RED 2
 #define LED_GREEN 3
@@ -21,7 +21,6 @@
 #define RELAY_2 5
 #define BAUD_RATE 115200
 #define SAVE_STATE_TIMEOUT_MS 6000 
-
 
 
 bool active_state = HIGH,
