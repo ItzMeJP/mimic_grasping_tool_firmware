@@ -2,7 +2,7 @@
 /**\file main.cpp
  * \brief Grasping Mimic Firmware Implementation.
  *
- * @version 2.0.13072022
+ * @version 2.1.13072022
  * @author João Pedro Carvalho de Souza
  */
 
@@ -100,6 +100,9 @@ void callbackDelete()
   delete_cmd_ = true;
 }
 
+/// <summary>
+/// Callback to set hardreset watchdog
+/// </summary>
 void callBackShutdown(){
   wdt_enable(WDTO_1S);
 }
@@ -137,11 +140,23 @@ void turnOffRelays()
 /// Send a single serial message with timestamp header. Usefull to print info messages Terminator is \r
 /// </summary>
 /// <param name="_msg"> message to pub in serial </param>
-void sendMSG(String _msg)
+void sendMSG(const char _msg[])
 {
   Serial.print(millis());
   Serial.print(": ");
   Serial.println(_msg);
+}
+
+/// <summary>
+/// Send a single serial message with timestamp header. Usefull to print info messages Terminator is \r
+/// </summary>
+/// <param name="_msg"> message to pub in serial </param>
+void sendMSG(const char _msg[], const char _msg_code[])
+{
+  Serial.print(millis());
+  Serial.print(": ");
+  Serial.print(_msg);
+  Serial.println(_msg_code);
 }
 
 /// <summary>
@@ -242,8 +257,12 @@ void waitForServerConnection()
   }
 
   relay_type_ = current_msg_;
-  String s(relay_type_);
-  sendMSG("Connection Stablished. Relay mode: " + s);
+  //String s(relay_type_);
+  //sendMSG("Connection Stablished. Relay mode: " + s);
+
+  char buffer[5];
+  itoa(relay_type_, buffer, 10);
+  sendMSG("Connection Stablished. Relay mode:", buffer);
   reset_cmd_ = false;
 }
 
